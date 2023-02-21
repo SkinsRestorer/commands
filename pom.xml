@@ -204,7 +204,6 @@
         <module>paper</module>
         <module>bungee</module>
         <module>sponge</module>
-        <module>sponge8</module>
         <module>jda</module>
         <module>velocity</module>
     </modules>

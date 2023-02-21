@@ -1,7 +1,7 @@
 package co.aikar.commands;
 
-import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.command.CommandCause;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 
 public class SpongeConditionContext extends ConditionContext <SpongeCommandIssuer> {
     SpongeConditionContext(SpongeCommandIssuer issuer, String config) {
@@ -9,11 +9,11 @@ public class SpongeConditionContext extends ConditionContext <SpongeCommandIssue
     }
 
 
-    public CommandSource getSource() {
+    public CommandCause getSource() {
         return getIssuer().getIssuer();
     }
 
-    public Player getPlayer() {
+    public ServerPlayer getPlayer() {
         return getIssuer().getPlayer();
     }
 }

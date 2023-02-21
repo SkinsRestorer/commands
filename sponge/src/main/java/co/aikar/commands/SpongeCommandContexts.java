@@ -25,19 +25,21 @@ package co.aikar.commands;
 
 import co.aikar.commands.contexts.CommandResultSupplier;
 import co.aikar.commands.sponge.contexts.OnlinePlayer;
+import net.kyori.adventure.text.format.NamedTextColor;
+
 import org.jetbrains.annotations.Contract;
+import org.spongepowered.api.ResourceKey;
 import org.spongepowered.api.Sponge;
-import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.command.CommandCause;
 import org.spongepowered.api.entity.living.player.User;
-import org.spongepowered.api.service.user.UserStorageService;
-import org.spongepowered.api.text.format.TextColor;
-import org.spongepowered.api.text.format.TextStyle;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.world.World;
+import org.spongepowered.api.world.server.ServerWorld;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -57,17 +59,17 @@ public class SpongeCommandContexts extends CommandContexts<SpongeCommandExecutio
         registerContext(User.class, c -> {
             String name = c.popFirstArg();
             // try online players first
-            Optional<Player> targetPlayer = Sponge.getGame().getServer().getPlayer(name);
+            Optional<ServerPlayer> targetPlayer = Sponge.server().player(name);
             if (targetPlayer.isPresent()) {
-                return targetPlayer.get();
+                return targetPlayer.get().user();
             }
 
-            Optional<UserStorageService> service = Sponge.getGame().getServiceManager().provide(UserStorageService.class);
-            if (!service.isPresent()) {
-                manager.log(LogLevel.ERROR, "No UserStorageService is available", new Error());
-                throw new InvalidCommandArgument(MessageKeys.ERROR_GENERIC_LOGGED, false);
+            Optional<User> user;
+            try {
+                user = Sponge.server().userManager().load(name).get();
+            } catch (Throwable t) {
+                throw new InvalidCommandArgument(MinecraftMessageKeys.NO_PLAYER_FOUND, false, "{search}", name);
             }
-            Optional<User> user = service.get().get(name);
             if (user.isPresent()) {
                 return user.get();
             }
@@ -77,7 +79,7 @@ public class SpongeCommandContexts extends CommandContexts<SpongeCommandExecutio
 
             return null;
         });
-        registerContext(TextColor.class, c -> {
+        /*registerContext(TextColor.class, c -> {
             String first = c.popFirstArg();
             Stream<TextColor> colours = Sponge.getRegistry().getAllOf(TextColor.class).stream();
             String filter = c.getFlagValue("filter", (String) null);
@@ -110,11 +112,11 @@ public class SpongeCommandContexts extends CommandContexts<SpongeCommandExecutio
                         .collect(Collectors.joining("<c1>,</c1> "));
                 return new InvalidCommandArgument(MessageKeys.PLEASE_SPECIFY_ONE_OF, "{valid}", valid);
             });
-        });
+        });*/
 
-        registerIssuerAwareContext(CommandSource.class, SpongeCommandExecutionContext::getSource);
-        registerIssuerAwareContext(Player.class, (c) -> {
-            Player player = c.getSource() instanceof Player ? (Player) c.getSource() : null;
+        registerIssuerAwareContext(CommandCause.class, SpongeCommandExecutionContext::getSource);
+        registerIssuerAwareContext(ServerPlayer.class, (c) -> {
+            ServerPlayer player = c.getSource().subject() instanceof ServerPlayer ? (ServerPlayer) c.getSource().subject() : null;
             if (player == null && !c.isOptional()) {
                 throw new InvalidCommandArgument(MessageKeys.NOT_ALLOWED_ON_CONSOLE, false);
             }
@@ -148,14 +150,14 @@ public class SpongeCommandContexts extends CommandContexts<SpongeCommandExecutio
             }
             return players.toArray(new OnlinePlayer[players.size()]);
         });
-        registerIssuerAwareContext(World.class, (c) -> {
+        registerIssuerAwareContext(ServerWorld.class, (c) -> {
             String firstArg = c.getFirstArg();
-            java.util.Optional<World> world = firstArg != null ? Sponge.getServer().getWorld(firstArg) : java.util.Optional.empty();
+            java.util.Optional<ServerWorld> world = firstArg != null ? Sponge.server().worldManager().world(getWorldResourceKey(firstArg)) : java.util.Optional.empty();
             if (world.isPresent()) {
                 c.popFirstArg();
             }
-            if (!world.isPresent() && c.getSource() instanceof Player) {
-                world = java.util.Optional.of(((Player) c.getSource()).getWorld());
+            if (!world.isPresent() && c.getSource().subject() instanceof ServerPlayer) {
+                world = java.util.Optional.of(((ServerPlayer) c.getSource().subject()).world());
             }
             if (!world.isPresent()) {
                 throw new InvalidCommandArgument(MinecraftMessageKeys.INVALID_WORLD);
@@ -166,7 +168,7 @@ public class SpongeCommandContexts extends CommandContexts<SpongeCommandExecutio
 
     @Contract("_,_,false -> !null")
     OnlinePlayer getOnlinePlayer(SpongeCommandIssuer issuer, String lookup, boolean allowMissing) throws InvalidCommandArgument {
-        Player player = ACFSpongeUtil.findPlayerSmart(issuer, lookup);
+        ServerPlayer player = ACFSpongeUtil.findPlayerSmart(issuer, lookup);
         if (player == null) {
             if (allowMissing) {
                 return null;
@@ -174,5 +176,13 @@ public class SpongeCommandContexts extends CommandContexts<SpongeCommandExecutio
             throw new InvalidCommandArgument(false);
         }
         return new OnlinePlayer(player);
+    }
+
+    private ResourceKey getWorldResourceKey(String arg) {
+        final String[] parts = arg.split(":");
+        if (parts.length > 1) {
+            return ResourceKey.of(parts[0], parts[1]);
+        }
+        return ResourceKey.minecraft(arg);
     }
 }

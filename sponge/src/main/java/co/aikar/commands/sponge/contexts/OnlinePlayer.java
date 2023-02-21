@@ -23,18 +23,18 @@
 
 package co.aikar.commands.sponge.contexts;
 
-import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 
 import java.util.Objects;
 
 public class OnlinePlayer {
-    public final Player player;
+    public final ServerPlayer player;
 
-    public OnlinePlayer(Player player) {
+    public OnlinePlayer(ServerPlayer player) {
         this.player = player;
     }
 
-    public Player getPlayer() {
+    public ServerPlayer getPlayer() {
         return this.player;
     }
 

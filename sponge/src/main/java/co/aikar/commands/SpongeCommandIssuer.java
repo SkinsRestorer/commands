@@ -24,10 +24,11 @@
 package co.aikar.commands;
 
 import org.jetbrains.annotations.NotNull;
-import org.spongepowered.api.command.CommandSource;
-import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.text.serializer.TextSerializers;
+import org.spongepowered.api.command.CommandCause;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.util.Identifiable;
+
+import net.kyori.adventure.text.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -36,35 +37,35 @@ import java.util.UUID;
 public class SpongeCommandIssuer implements CommandIssuer {
 
     private final SpongeCommandManager manager;
-    private final CommandSource source;
+    private final CommandCause source;
 
-    SpongeCommandIssuer(SpongeCommandManager manager, final CommandSource source) {
+    SpongeCommandIssuer(SpongeCommandManager manager, final CommandCause source) {
         this.manager = manager;
         this.source = source;
     }
 
     @Override
     public boolean isPlayer() {
-        return this.source instanceof Player;
+        return this.source.subject() instanceof ServerPlayer;
     }
 
     @Override
-    public CommandSource getIssuer() {
+    public CommandCause getIssuer() {
         return this.source;
     }
 
     @Override
     public @NotNull UUID getUniqueId() {
-        if (this.source instanceof Identifiable) {
-            return ((Identifiable) source).getUniqueId();
+        if (this.source.subject() instanceof Identifiable) {
+            return ((Identifiable) source.subject()).uniqueId();
         }
 
         //generate a unique id based of the name (like for the console command sender)
-        return UUID.nameUUIDFromBytes(source.getName().getBytes(StandardCharsets.UTF_8));
+        return UUID.nameUUIDFromBytes(source.identifier().getBytes(StandardCharsets.UTF_8));
     }
 
-    public Player getPlayer() {
-        return isPlayer() ? (Player) source : null;
+    public ServerPlayer getPlayer() {
+        return isPlayer() ? (ServerPlayer) source.subject() : null;
     }
 
     @Override
@@ -74,7 +75,7 @@ public class SpongeCommandIssuer implements CommandIssuer {
 
     @Override
     public void sendMessageInternal(String message) {
-        this.source.sendMessage(TextSerializers.LEGACY_FORMATTING_CODE.deserialize(message));
+        this.source.audience().sendMessage(Component.text(message));
     }
 
     @Override

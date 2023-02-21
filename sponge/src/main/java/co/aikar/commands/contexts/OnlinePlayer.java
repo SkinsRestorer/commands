@@ -23,14 +23,14 @@
 
 package co.aikar.commands.contexts;
 
-import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 
 /**
  * @deprecated Use {@link co.aikar.commands.sponge.contexts.OnlinePlayer instead}
  */
 @Deprecated
 public class OnlinePlayer extends co.aikar.commands.sponge.contexts.OnlinePlayer {
-    public OnlinePlayer(Player player) {
+    public OnlinePlayer(ServerPlayer player) {
         super(player);
     }
 }
