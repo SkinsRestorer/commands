@@ -33,13 +33,14 @@ public class ACFSpongeListener {
     }
 
     @Listener(order = Order.LAST)
-    public void registerCommands(RegisterCommandEvent<Command> event) {
+    public void registerCommands(RegisterCommandEvent<Command.Raw> event) {
         for (Entry<String, SpongeRootCommand> entry : this.manager.registeredCommands.entrySet()) {
             String commandName = entry.getKey().toLowerCase(Locale.ENGLISH);
-            SpongeRootCommand spongeCommand = (SpongeRootCommand) entry.getValue();
-            event.register(manager.plugin, spongeCommand, commandName);
+            SpongeRootCommand spongeCommand = entry.getValue();
+            if (!spongeCommand.isRegistered) {
+                event.register(manager.plugin, spongeCommand, commandName);
+            }
             spongeCommand.isRegistered = true;
-            this.manager.registeredCommands.put(commandName, spongeCommand);
         }
     }
 }
