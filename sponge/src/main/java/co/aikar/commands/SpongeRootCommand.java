@@ -72,7 +72,6 @@ public class SpongeRootCommand implements Command.Raw, RootCommand {
         final List<String> completionStrings = getTabCompletions(manager.getCommandIssuer(cause), this.name, args);
         final List<CommandCompletion> completions = new ArrayList<>();
         for (String completion : completionStrings) {
-            System.out.println("\"" + completion + "\"");
             completions.add(CommandCompletion.of(completion));
         }
         return completions;

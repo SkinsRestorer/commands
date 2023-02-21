@@ -713,7 +713,7 @@ public abstract class BaseCommand {
     private static List<String> filterTabComplete(String arg, List<String> cmds) {
         return cmds.stream()
                 .distinct()
-                .filter(cmd -> cmd != null && (arg.isEmpty() || ApacheCommonsLangUtil.startsWithIgnoreCase(cmd, arg)))
+                .filter(cmd -> cmd != null && !cmd.isEmpty() && (arg.isEmpty() || ApacheCommonsLangUtil.startsWithIgnoreCase(cmd, arg)))
                 .collect(Collectors.toList());
     }
 
