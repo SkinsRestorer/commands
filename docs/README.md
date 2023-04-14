@@ -1,3 +1,5 @@
+**--- As of v15 SkinsRestorer no longer uses acf ---**
+
 # Annotation Command Framework (ACF)
 
 ## Purpose
